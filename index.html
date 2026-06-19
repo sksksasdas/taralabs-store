@@ -89,6 +89,24 @@
         }
         .qr-container img { width: 200px; height: 200px; }
         .steps { text-align: left; margin-top: 20px; color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 2; }
+        
+        /* Download section */
+        .download-section { display: none; margin-top: 20px; }
+        .download-section.active { display: block; }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #00ff88, #00d2ff);
+            color: #000;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 16px;
+            transition: all 0.3s;
+        }
+        .download-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(0,255,136,0.4); }
+        
         .close-btn {
             background: transparent; border: 1px solid rgba(255,255,255,0.3);
             color: #fff; padding: 10px 28px; border-radius: 8px;
@@ -105,6 +123,20 @@
             display: inline-block; background: rgba(0,210,255,0.15); color: #00d2ff;
             padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-right: 6px;
         }
+        
+        .paid-btn {
+            background: linear-gradient(90deg, #ff6b6b, #ffa500);
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 16px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .paid-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(255,107,107,0.4); }
     </style>
 </head>
 <body>
@@ -124,15 +156,22 @@
         <div class="modal">
             <h2 id="modal-title">商品名称</h2>
             <div id="modal-price" class="price-big">¥9.9</div>
-            <p style="color:rgba(255,255,255,0.6)">扫码付款后，自动获取下载链接</p>
+            <p style="color:rgba(255,255,255,0.6)">扫码付款后，点击"我已付款"获取下载链接</p>
             <div class="qr-container">
                 <img src="alipay-qr.jpg" alt="支付宝扫码付款">
             </div>
             <div class="steps">
                 ① 扫描上方二维码付款<br>
                 ② 付款金额填写：<strong id="modal-amount">9.9</strong> 元<br>
-                ③ 付款后页面自动显示下载链接
+                ③ 付款后点击下方"我已付款"按钮
             </div>
+            <button class="paid-btn" onclick="showDownload()">✅ 我已付款</button>
+            
+            <div class="download-section" id="download-section">
+                <p style="color:#00ff88; font-size:1.1rem; margin:16px 0">🎉 感谢购买！点击下方按钮下载：</p>
+                <a class="download-btn" id="download-link" href="#" target="_blank">📥 立即下载</a>
+            </div>
+            
             <button class="close-btn" onclick="closeModal()">关闭</button>
         </div>
     </div>
@@ -151,7 +190,8 @@
                 price: 9.9,
                 emoji: '🌃',
                 gradient: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
-                tags: ['壁纸', '4K', '50张']
+                tags: ['壁纸', '4K', '50张'],
+                downloadUrl: 'https://raw.githubusercontent.com/sksksasdas/taralabs-store/main/product1_wallpapers.zip'
             },
             {
                 id: 2,
@@ -160,7 +200,8 @@
                 price: 9.9,
                 emoji: '🐱',
                 gradient: 'linear-gradient(135deg, #ffecd2, #fcb69f)',
-                tags: ['头像', '表情包', '100张']
+                tags: ['头像', '表情包', '100张'],
+                downloadUrl: 'https://raw.githubusercontent.com/sksksasdas/taralabs-store/main/product2_avatars.zip'
             },
             {
                 id: 3,
@@ -169,7 +210,8 @@
                 price: 19.9,
                 emoji: '📝',
                 gradient: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
-                tags: ['提示词', '效率工具', '500+']
+                tags: ['提示词', '效率工具', '500+'],
+                downloadUrl: 'https://raw.githubusercontent.com/sksksasdas/taralabs-store/main/product3_prompts.zip'
             },
             {
                 id: 4,
@@ -178,7 +220,8 @@
                 price: 14.9,
                 emoji: '📈',
                 gradient: 'linear-gradient(135deg, #84fab0, #8fd3f4)',
-                tags: ['Excel', '模板', '30套']
+                tags: ['Excel', '模板', '30套'],
+                downloadUrl: 'https://raw.githubusercontent.com/sksksasdas/taralabs-store/main/product4_excel.zip'
             },
             {
                 id: 5,
@@ -187,7 +230,8 @@
                 price: 9.9,
                 emoji: '🎧',
                 gradient: 'linear-gradient(135deg, #667eea, #764ba2)',
-                tags: ['白噪音', '音频', '助眠']
+                tags: ['白噪音', '音频', '助眠'],
+                downloadUrl: 'https://raw.githubusercontent.com/sksksasdas/taralabs-store/main/product5_whitenoise.zip'
             },
             {
                 id: 6,
@@ -196,9 +240,12 @@
                 price: 19.9,
                 emoji: '📕',
                 gradient: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
-                tags: ['文案', '小红书', '200+']
+                tags: ['文案', '小红书', '200+'],
+                downloadUrl: 'https://raw.githubusercontent.com/sksksasdas/taralabs-store/main/product6_xiaohongshu.zip'
             }
         ];
+
+        let currentProductId = null;
 
         function renderProducts() {
             const container = document.getElementById('products');
@@ -222,14 +269,25 @@
 
         function openModal(id) {
             const p = products.find(x => x.id === id);
+            currentProductId = id;
             document.getElementById('modal-title').textContent = p.name;
             document.getElementById('modal-price').textContent = '¥' + p.price;
             document.getElementById('modal-amount').textContent = p.price;
+            document.getElementById('download-section').classList.remove('active');
+            document.querySelector('.paid-btn').style.display = 'inline-block';
             document.getElementById('modal').classList.add('active');
+        }
+
+        function showDownload() {
+            const p = products.find(x => x.id === currentProductId);
+            document.getElementById('download-link').href = p.downloadUrl;
+            document.getElementById('download-section').classList.add('active');
+            document.querySelector('.paid-btn').style.display = 'none';
         }
 
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
+            currentProductId = null;
         }
 
         // Close modal on overlay click
