@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TARALABS 数字商店</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .header p { color: rgba(255,255,255,0.6); font-size: 1.1rem; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+        .product-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.12);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0,210,255,0.4);
+            box-shadow: 0 8px 32px rgba(0,210,255,0.15);
+        }
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+        .product-info { padding: 20px; }
+        .product-info h3 { font-size: 1.25rem; margin-bottom: 8px; }
+        .product-info p { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.6; }
+        .product-footer { display: flex; justify-content: space-between; align-items: center; }
+        .price { font-size: 1.5rem; font-weight: bold; color: #00d2ff; }
+        .buy-btn {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            color: #000;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .buy-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(0,210,255,0.4); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1a1a2e; border-radius: 20px; padding: 32px;
+            max-width: 420px; width: 90%; text-align: center;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .modal h2 { margin-bottom: 8px; font-size: 1.4rem; }
+        .modal .price-big { font-size: 2rem; color: #00d2ff; margin: 16px 0; }
+        .qr-container {
+            background: #fff; padding: 16px; border-radius: 12px;
+            display: inline-block; margin: 20px 0;
+        }
+        .qr-container img { width: 200px; height: 200px; }
+        .steps { text-align: left; margin-top: 20px; color: rgba(255,255,255,0.7); font-size: 0.9rem; line-height: 2; }
+        .close-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.3);
+            color: #fff; padding: 10px 28px; border-radius: 8px;
+            cursor: pointer; margin-top: 16px; transition: all 0.3s;
+        }
+        .close-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .footer {
+            text-align: center; padding: 30px; color: rgba(255,255,255,0.4);
+            font-size: 0.85rem; border-top: 1px solid rgba(255,255,255,0.08);
+            margin-top: 60px;
+        }
+        .tag {
+            display: inline-block; background: rgba(0,210,255,0.15); color: #00d2ff;
+            padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 TARALABS 数字商店</h1>
+        <p>精选数字产品 · 即买即用 · 自动发货</p>
+    </div>
+
+    <div class="container">
+        <div class="products" id="products">
+            <!-- Products will be rendered here -->
+        </div>
+    </div>
+
+    <!-- Purchase Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <h2 id="modal-title">商品名称</h2>
+            <div id="modal-price" class="price-big">¥9.9</div>
+            <p style="color:rgba(255,255,255,0.6)">扫码付款后，自动获取下载链接</p>
+            <div class="qr-container">
+                <img src="alipay-qr.jpg" alt="支付宝扫码付款">
+            </div>
+            <div class="steps">
+                ① 扫描上方二维码付款<br>
+                ② 付款金额填写：<strong id="modal-amount">9.9</strong> 元<br>
+                ③ 付款后页面自动显示下载链接
+            </div>
+            <button class="close-btn" onclick="closeModal()">关闭</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>TARALABS 超时空 · 所有产品均为数字虚拟商品，售出后不退不换</p>
+        <p style="margin-top:8px">Powered by AI 🤖</p>
+    </div>
+
+    <script>
+        const products = [
+            {
+                id: 1,
+                name: '🎨 AI赛博朋克壁纸包',
+                desc: '50张超高清AI生成赛博朋克风格壁纸，支持手机/电脑/平板，分辨率最高4K',
+                price: 9.9,
+                emoji: '🌃',
+                gradient: 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)',
+                tags: ['壁纸', '4K', '50张']
+            },
+            {
+                id: 2,
+                name: '✨ AI治愈系头像包',
+                desc: '100张AI生成治愈系头像/表情包，适合微信/QQ/小红书，每张都是独一无二',
+                price: 9.9,
+                emoji: '🐱',
+                gradient: 'linear-gradient(135deg, #ffecd2, #fcb69f)',
+                tags: ['头像', '表情包', '100张']
+            },
+            {
+                id: 3,
+                name: '💼 ChatGPT提示词大全',
+                desc: '500+精选ChatGPT/Claude高效提示词模板，覆盖写作/编程/营销/学习等场景',
+                price: 19.9,
+                emoji: '📝',
+                gradient: 'linear-gradient(135deg, #a18cd1, #fbc2eb)',
+                tags: ['提示词', '效率工具', '500+']
+            },
+            {
+                id: 4,
+                name: '📊 Excel万能模板合集',
+                desc: '财务报表/项目管理/库存管理/数据分析等30套即拿即用的Excel模板',
+                price: 14.9,
+                emoji: '📈',
+                gradient: 'linear-gradient(135deg, #84fab0, #8fd3f4)',
+                tags: ['Excel', '模板', '30套']
+            },
+            {
+                id: 5,
+                name: '🎵 白噪音·专注音效包',
+                desc: '雨声/海浪/森林/咖啡厅等高品质白噪音音频，助眠/专注/冥想必备',
+                price: 9.9,
+                emoji: '🎧',
+                gradient: 'linear-gradient(135deg, #667eea, #764ba2)',
+                tags: ['白噪音', '音频', '助眠']
+            },
+            {
+                id: 6,
+                name: '🔥 小红书爆款文案库',
+                desc: '200+小红书爆款文案模板 + 标题公式 + 排版技巧，覆盖美妆/穿搭/美食/职场等赛道',
+                price: 19.9,
+                emoji: '📕',
+                gradient: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+                tags: ['文案', '小红书', '200+']
+            }
+        ];
+
+        function renderProducts() {
+            const container = document.getElementById('products');
+            container.innerHTML = products.map(p => `
+                <div class="product-card" onclick="openModal(${p.id})">
+                    <div class="product-image" style="background: ${p.gradient}">
+                        ${p.emoji}
+                    </div>
+                    <div class="product-info">
+                        <h3>${p.name}</h3>
+                        <p>${p.desc}</p>
+                        <div style="margin-bottom:12px">${p.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+                        <div class="product-footer">
+                            <span class="price">¥${p.price}</span>
+                            <button class="buy-btn">立即购买</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal(id) {
+            const p = products.find(x => x.id === id);
+            document.getElementById('modal-title').textContent = p.name;
+            document.getElementById('modal-price').textContent = '¥' + p.price;
+            document.getElementById('modal-amount').textContent = p.price;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('modal').addEventListener('click', e => {
+            if (e.target.id === 'modal') closeModal();
+        });
+
+        renderProducts();
+    </script>
+</body>
+</html>
